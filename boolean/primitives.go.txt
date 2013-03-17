@@ -1,0 +1,157 @@
+func (s C64Slice) BlockCopy(destination, source, count int) {
+	if destination < len(s) {
+		if end := destination + count; end >= len(s) {
+			copy(s[destination:], s[source:])
+		} else {
+			copy(s[destination : end], s[source:])
+		}
+	}
+}
+
+func (s C64Slice) Overwrite(offset int, container interface{}) {
+	switch container := container.(type) {
+	case C64Slice:			copy(s[offset:], container)
+	case []complex64:		copy(s[offset:], container)
+	default:				panic(container)
+	}
+}
+
+func (s *C64Slice) Reallocate(length, capacity int) {
+	switch {
+	case length > capacity:		s.Reallocate(capacity, capacity)
+	case capacity != cap(*s):	x := make(C64Slice, length, capacity)
+								copy(x, *s)
+								*s = x
+	default:					*s = (*s)[:length]
+	}
+}
+
+func (s *C64Slice) Extend(n int) {
+	c := cap(*s)
+	l := len(*s) + n
+	if l > c {
+		c = l
+	}
+	s.Reallocate(l, c)
+}
+
+func (s *C64Slice) Expand(i, n int) {
+	if i < 0 {
+		i = 0
+	}
+
+	l := s.Len()
+	if l < i {
+		i = l
+	}
+
+	l += n
+	c := s.Cap()
+	if c < l {
+		c = l
+	}
+
+	if c != s.Cap() {
+		x := make(C64Slice, l, c)
+		copy(x, (*s)[:i])
+		copy(x[i + n:], (*s)[i:])
+		*s = x
+	} else {
+		a := (*s)[:l]
+		for j := l - 1; j >= i; j-- {
+			a[j] = a[j - n]
+		}
+		*s = a
+	}
+}
+
+func (s C64Slice) Depth() int {
+	return 0
+}
+
+func (s *C64Slice) Append(v interface{}) {
+	switch v := v.(type) {
+	case complex64:			*s = append(*s, v)
+	case C64Slice:			*s = append(*s, v...)
+	case []complex64:		s.Append(C64Slice(v))
+	default:				panic(v)
+	}
+}
+
+func (s *C64Slice) Prepend(v interface{}) {
+	switch v := v.(type) {
+	case complex64:			l := s.Len() + 1
+							n := make(C64Slice, l, l)
+							n[0] = v
+							copy(n[1:], *s)
+							*s = n
+
+	case C64Slice:			l := s.Len() + len(v)
+							n := make(C64Slice, l, l)
+							copy(n, v)
+							copy(n[len(v):], *s)
+							*s = n
+
+	case []complex64:		s.Prepend(C64Slice(v))
+	default:				panic(v)
+	}
+}
+
+func (s C64Slice) Car() (h interface{}) {
+	if s.Len() > 0 {
+		h = s[0]
+	}
+	return
+}
+
+func (s C64Slice) Cdr() (t C64Slice) {
+	if s.Len() > 1 {
+		t = s[1:]
+	}
+	return
+}
+
+func (s *C64Slice) Rplaca(v interface{}) {
+	switch {
+	case s == nil:			*s = C64Slice{v.(complex64)}
+	case s.Len() == 0:		*s = append(*s, v.(complex64))
+	default:				(*s)[0] = v.(complex64)
+	}
+}
+
+func (s *C64Slice) Rplacd(v interface{}) {
+	if s == nil {
+		*s = C64Slice{v.(complex64)}
+	} else {
+		ReplaceSlice := func(v C64Slice) {
+			if l := len(v); l < cap(*s) {
+				copy((*s)[1:], v)
+				*s = (*s)[:l + 1]
+			} else {
+				l++
+				n := make(C64Slice, l, l)
+				copy(n, (*s)[:1])
+				copy(n[1:], v)
+				*s = n
+			}
+		}
+
+		switch v := v.(type) {
+		case complex64:			(*s)[1] = v
+								*s = (*s)[:2]
+		case C64Slice:			ReplaceSlice(v)
+		case []complex64:		ReplaceSlice(C64Slice(v))
+		case nil:				*s = (*s)[:1]
+		default:				panic(v)
+		}
+	}
+}
+
+func (s *C64Slice) Pop() (r complex64, ok bool) {
+	if end := s.Len() - 1; end > -1 {
+		r = (*s)[end]
+		*s = (*s)[:end]
+		ok = true
+	}
+	return
+}
