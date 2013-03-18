@@ -712,7 +712,13 @@ func (s *Slice) Reallocate(n ...int) bool {
 	switch len(n) {
 	case 1:
 		length := n[0]
-		*s = (*s)[:length]
+		if length > cap(*s) {
+			x := make(Slice, length)
+			copy(x, *s)
+			*s = x
+		} else {
+			*s = (*s)[:length]
+		}
 	case 2:
 		length, capacity := n[0], n[1]
 		switch {

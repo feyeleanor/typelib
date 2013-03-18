@@ -857,9 +857,13 @@ func TestSliceUniq(t *testing.T) {
 func TestSliceReallocate(t *testing.T) {
 	ConfirmReallocate := func(s Slice, l int, r Slice) {
 		x := s.Clone().(Slice)
-		switch x.Reallocate(l); {
-		case s == nil:				t.Fatalf("%v.Reallocate(%v) created a nil value for Slice", s, l)
-		case s.Len() != l:			t.Fatalf("%v.Reallocate(%v) length should be %v but is %v", s, l, l, s.Len())
+		y := &x
+		switch y.Reallocate(l); {
+		case y == nil:				t.Fatalf("%v.Reallocate(%v) created a nil value for Slice", s, l)
+		case y.Len() != l:			t.Fatalf("%v.Reallocate(%v) length should be %v but is %v", s, l, r.Len(), y.Len())
+		case !y.Equal(r):			t.Fatalf("%v.Reallocate(%v) should be %v but is %v", s, l, r, y)
+		case x == nil:				t.Fatalf("%v.Reallocate(%v) created a nil value for Slice", s, l)
+		case x.Len() != l:			t.Fatalf("%v.Reallocate(%v) length should be %v but is %v", s, l, r.Len(), x.Len())
 		case !x.Equal(r):			t.Fatalf("%v.Reallocate(%v) should be %v but is %v", s, l, r, x)
 		}
 	}
@@ -869,27 +873,31 @@ func TestSliceReallocate(t *testing.T) {
 	ConfirmReallocate(Slice{true, false, true, false}, 4, Slice{true, false, true, false})
 	ConfirmReallocate(Slice{true, false, true, false}, 5, Slice{true, false, true, false, false})
 
-/*
-	ConfirmReallocateCapacity := func(s Slice, l, c, r Slice) {
+
+	ConfirmReallocateCapacity := func(s Slice, l, c int, r Slice) {
 		el := l
 		if el > c {
 			el = c
 		}
 		x := s.Clone().(Slice)
-		switch s.Reallocate(l, c); {
-		case s == nil:				t.Fatalf("%v.Reallocate(%v, %v) created a nil value for Slice", o, l, c)
-		case s.Cap() != c:			t.Fatalf("%v.Reallocate(%v, %v) capacity should be %v but is %v", o, l, c, c, s.Cap())
-		case s.Len() != el:			t.Fatalf("%v.Reallocate(%v, %v) length should be %v but is %v", o, l, c, el, s.Len())
-		case !x.Equal(r):			t.Fatalf("%v.Reallocate(%v, %v) should be %v but is %v", o, l, c, r, s)
+		y := &x
+		switch y.Reallocate(l, c); {
+		case y == nil:				t.Fatalf("%v.Reallocate(%v, %v) created a nil value for Slice", s, l, c)
+		case y.Cap() != c:			t.Fatalf("%v.Reallocate(%v, %v) capacity should be %v but is %v", s, l, c, c, s.Cap())
+		case y.Len() != el:			t.Fatalf("%v.Reallocate(%v, %v) length should be %v but is %v", s, l, c, el, s.Len())
+		case !y.Equal(r):			t.Fatalf("%v.Reallocate(%v, %v) should be %v but is %v", s, l, c, r, y)
+		case x == nil:				t.Fatalf("%v.Reallocate(%v, %v) created a nil value for Slice", s, l, c)
+		case x.Cap() != c:			t.Fatalf("%v.Reallocate(%v, %v) capacity should be %v but is %v", s, l, c, c, s.Cap())
+		case x.Len() != el:			t.Fatalf("%v.Reallocate(%v, %v) length should be %v but is %v", s, l, c, el, s.Len())
+		case !x.Equal(r):			t.Fatalf("%v.Reallocate(%v, %v) should be %v but is %v", s, l, c, r, y)
 		}
 	}
 
 	ConfirmReallocateCapacity(Slice{}, 0, 10, make(Slice, 0, 10))
-	ConfirmReallocateCapacity(Slice{0, 1, 2, 3, 4}, 3, 10, Slice{0, 1, 2})
-	ConfirmReallocateCapacity(Slice{0, 1, 2, 3, 4}, 5, 10, Slice{0, 1, 2, 3, 4})
-	ConfirmReallocateCapacity(Slice{0, 1, 2, 3, 4}, 10, 10, Slice{0, 1, 2, 3, 4, 0, 0, 0, 0, 0})
-	ConfirmReallocateCapacity(Slice{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 1, 5, Slice{0})
-	ConfirmReallocateCapacity(Slice{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 5, 5, Slice{0, 1, 2, 3, 4})
-	ConfirmReallocateCapacity(Slice{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 5, Slice{0, 1, 2, 3, 4})
-*/
+	ConfirmReallocateCapacity(Slice{true, true, true, true, true}, 3, 10, Slice{true, true, true})
+	ConfirmReallocateCapacity(Slice{true, true, true, true, true}, 5, 10, Slice{true, true, true, true, true})
+	ConfirmReallocateCapacity(Slice{true, true, true, true, true}, 10, 10, Slice{true, true, true, true, true, false, false, false, false, false})
+	ConfirmReallocateCapacity(Slice{true, true, true, true, true}, 1, 3, Slice{true})
+	ConfirmReallocateCapacity(Slice{true, true, true, true, true}, 5, 5, Slice{true, true, true, true, true})
+	ConfirmReallocateCapacity(Slice{true, true, true, true, true, true, true, true, true, true}, 10, 5, Slice{true, true, true, true, true})
 }
