@@ -736,3 +736,15 @@ func (s *Slice) Reallocate(n ...int) bool {
 	}
 	return true
 }
+
+func (s *Slice) Extend(n int) bool {
+	if n > 0 {
+		c := cap(*s)
+		l := len(*s) + n
+		if l > c {
+			c = l
+		}
+		return s.Reallocate(l, c)
+	}
+	return false
+}

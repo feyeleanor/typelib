@@ -16,16 +16,6 @@ func (s C64Slice) Overwrite(offset int, container interface{}) {
 	}
 }
 
-func (s *C64Slice) Reallocate(length, capacity int) {
-	switch {
-	case length > capacity:		s.Reallocate(capacity, capacity)
-	case capacity != cap(*s):	x := make(C64Slice, length, capacity)
-								copy(x, *s)
-								*s = x
-	default:					*s = (*s)[:length]
-	}
-}
-
 func (s *C64Slice) Extend(n int) {
 	c := cap(*s)
 	l := len(*s) + n

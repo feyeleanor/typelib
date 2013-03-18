@@ -901,3 +901,22 @@ func TestSliceReallocate(t *testing.T) {
 	ConfirmReallocateCapacity(Slice{true, true, true, true, true}, 5, 5, Slice{true, true, true, true, true})
 	ConfirmReallocateCapacity(Slice{true, true, true, true, true, true, true, true, true, true}, 10, 5, Slice{true, true, true, true, true})
 }
+
+func TestSliceExtend(t *testing.T) {
+	ConfirmExtend := func(s Slice, n int, r Slice) {
+		c := s.Cap()
+		x := s.Clone().(Slice)
+		y := &x
+		switch y.Extend(n); {
+		case y.Len() != r.Len():	t.Fatalf("%v.Extend(%v) len should be %v but is %v", s, n, r.Len(), y.Len())
+		case y.Cap() != c + n:		t.Fatalf("%v.Extend(%v) cap should be %v but is %v", s, n, c + n, y.Cap())
+		case !y.Equal(r):			t.Fatalf("%v.Extend(%v) should be %v but is %v", s, n, r, y)
+		case x.Len() != r.Len():	t.Fatalf("%v.Extend(%v) len should be %v but is %v", s, n, r.Len(), x.Len())
+		case x.Cap() != c + n:		t.Fatalf("%v.Extend(%v) cap should be %v but is %v", s, n, c + n, x.Cap())
+		case !x.Equal(r):			t.Fatalf("%v.Extend(%v) should be %v but is %v", s, n, r, x)
+		}
+	}
+
+	ConfirmExtend(Slice{}, 1, Slice{false})
+	ConfirmExtend(Slice{}, 2, Slice{false, false})
+}
