@@ -22,7 +22,7 @@ func (s Slice) String() (t string) {
 	for _, v := range s {
 		elements = append(elements, fmt.Sprintf("%v", v))
 	}
-	return fmt.Sprintf("(%v)", strings.Join(elements, " "))
+	return fmt.Sprintf("(boolean slice (%v))", strings.Join(elements, " "))
 }
 
 func (s Slice) equal(o Slice) (r bool) {
@@ -211,6 +211,22 @@ func (s Slice) Swap(n ...int) bool {
 		return false
 	}
 	return true
+}
+
+func (s Slice) Copy(dest, src, n int) {
+	end := len(s)
+	if dest > end {
+		dest = end
+	}
+	if src > end {
+		src = end
+	}
+	if src + n > end {
+		n = end - src
+	}
+	if n > 0 {
+		copy(s[dest:], s[src:src + n])
+	}
 }
 
 func (s Slice) Merge(o, f interface{}) bool {
@@ -723,7 +739,7 @@ func (s *Slice) Reallocate(n ...int) bool {
 		length, capacity := n[0], n[1]
 		switch {
 		case length > capacity:
-			s.Reallocate(capacity, capacity)
+			return s.Reallocate(capacity, capacity)
 		case capacity != cap(*s):
 			x := make(Slice, length, capacity)
 			copy(x, *s)
@@ -737,14 +753,60 @@ func (s *Slice) Reallocate(n ...int) bool {
 	return true
 }
 
-func (s *Slice) Extend(n int) bool {
-	if n > 0 {
-		c := cap(*s)
-		l := len(*s) + n
-		if l > c {
-			c = l
+func (s *Slice) Expand(n ...int) bool {
+	switch len(n) {
+	case 1:
+		return s.Reallocate(s.Len() + n[0])
+	case 2:
+		i, length := n[0], n[1]
+		switch l := s.Len(); {
+		case i < 0:
+			i = 0
+		case i > l:
+			i = l
 		}
-		return s.Reallocate(l, c)
+		if s.Reallocate(s.Len() + length) {
+			end := i + length
+			copy((*s)[end:], (*s)[i:])
+			s.Clear(i, end - 1)
+			return true
+		}
 	}
 	return false
+}
+
+func (s *Slice) Append(v interface{}) bool {
+	switch v := v.(type) {
+	case bool:
+		*s = append(*s, v)
+	case Slice:
+		*s = append(*s, v...)
+	case []bool:
+		s.Append(Slice(v))
+	default:
+		return false
+	}
+	return true
+}
+
+func (s *Slice) Prepend(v interface{}) bool {
+	switch v := v.(type) {
+	case bool:
+		l := s.Len() + 1
+		n := make(Slice, l, l)
+		n[0] = v
+		copy(n[1:], *s)
+		*s = n
+	case Slice:
+		l := s.Len() + len(v)
+		n := make(Slice, l, l)
+		copy(n, v)
+		copy(n[len(v):], *s)
+		*s = n
+	case []bool:
+		s.Prepend(Slice(v))
+	default:
+		return false
+	}
+	return true
 }

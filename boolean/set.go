@@ -1,5 +1,10 @@
 package boolean
 
+import(
+	"fmt"
+	"strings"
+)
+
 type _map	map[bool] bool
 
 func (m _map) Len() int {
@@ -43,12 +48,12 @@ func (m _map) Each(f interface{}) {
 	}
 }
 
-func (m _map) String() (t string) {
-	elements := Slice{}
+func (m _map) String() string {
+	elements := []string{}
 	m.Each(func(v bool) {
-		elements = append(elements, v)
+		elements = append(elements, fmt.Sprintf("%v", v))
 	})
-	return elements.String()
+	return strings.Join(elements, " ")
 }
 
 
@@ -60,6 +65,10 @@ func NewSet(v... bool) (r Set) {
 	r._map = make(_map)
 	r.Include(v)
 	return
+}
+
+func (s Set) String() string {
+	return fmt.Sprintf("(boolean set (%v))", s._map.String())
 }
 
 func (s Set) Empty() Set {
@@ -77,12 +86,4 @@ func (s Set) Equal(o interface{}) (r bool) {
 		}
 	}
 	return
-}
-
-func (s Set) True() interface{} {
-	var r bool
-	s.Each(func(v bool) {
-		r = r && v
-	})
-	return r
 }

@@ -12,9 +12,9 @@ func TestSliceString(t *testing.T) {
 		}
 	}
 
-	ConfirmString(Slice{}, "()")
-	ConfirmString(Slice{false}, "(false)")
-	ConfirmString(Slice{false, true}, "(false true)")
+	ConfirmString(Slice{}, "(boolean slice ())")
+	ConfirmString(Slice{false}, "(boolean slice (false))")
+	ConfirmString(Slice{false, true}, "(boolean slice (false true))")
 }
 
 func TestSliceEqual(t *testing.T) {
@@ -240,6 +240,27 @@ func TestSliceSwap(t *testing.T) {
 	ConfirmSwap(Slice{true, false, false}, []int{0, 1}, Slice{false, true, false})
 	ConfirmSwap(Slice{true, false, true, false, true}, []int{0, 1, 2}, Slice{false, true, false, false, true})
 	ConfirmSwap(Slice{true, true, true, false, false, false}, []int{0, 3, 3}, Slice{false, false, false, true, true, true})
+}
+
+func TestSliceCopy(t *testing.T) {
+	ConfirmCopy := func(s Slice, destination, source, count int, r Slice) {
+		x := s.Clone().(Slice)
+		if x.Copy(destination, source, count); !x.Equal(r) {
+			t.Fatalf("%v.Copy(%v, %v, %v) should be %v but is %v", s, destination, source, count, r, x)
+		}
+	}
+
+	ConfirmCopy(Slice{}, 0, 0, 1, Slice{})
+	ConfirmCopy(Slice{}, 1, 0, 1, Slice{})
+	ConfirmCopy(Slice{}, 0, 1, 1, Slice{})
+
+	ConfirmCopy(Slice{true, false, true, false, true}, 0, 0, 4, Slice{true, false, true, false, true})
+	ConfirmCopy(Slice{true, false, true, false, true}, 4, 4, 4, Slice{true, false, true, false, true})
+	ConfirmCopy(Slice{true, false, true, false, false}, 4, 0, 4, Slice{true, false, true, false, true})
+	ConfirmCopy(Slice{true, false, true, false, false}, 5, 0, 4, Slice{true, false, true, false, false})
+	ConfirmCopy(Slice{true, false, true, false, false}, 5, 5, 4, Slice{true, false, true, false, false})
+	ConfirmCopy(Slice{true, false, true, false, false}, 3, 1, 4, Slice{true, false, true, false, true})
+	ConfirmCopy(Slice{true, false, true, false, false}, 2, 4, 4, Slice{true, false, false, false, false})
 }
 
 func TestSliceMerge(t *testing.T) {
@@ -902,12 +923,12 @@ func TestSliceReallocate(t *testing.T) {
 	ConfirmReallocateCapacity(Slice{true, true, true, true, true, true, true, true, true, true}, 10, 5, Slice{true, true, true, true, true})
 }
 
-func TestSliceExtend(t *testing.T) {
-	ConfirmExtend := func(s Slice, n int, r Slice) {
+func TestSliceExpand(t *testing.T) {
+	ConfirmExpand := func(s Slice, n int, r Slice) {
 		c := s.Cap()
 		x := s.Clone().(Slice)
 		y := &x
-		switch y.Extend(n); {
+		switch y.Expand(n); {
 		case y.Len() != r.Len():	t.Fatalf("%v.Extend(%v) len should be %v but is %v", s, n, r.Len(), y.Len())
 		case y.Cap() != c + n:		t.Fatalf("%v.Extend(%v) cap should be %v but is %v", s, n, c + n, y.Cap())
 		case !y.Equal(r):			t.Fatalf("%v.Extend(%v) should be %v but is %v", s, n, r, y)
@@ -917,6 +938,70 @@ func TestSliceExtend(t *testing.T) {
 		}
 	}
 
-	ConfirmExtend(Slice{}, 1, Slice{false})
-	ConfirmExtend(Slice{}, 2, Slice{false, false})
+	ConfirmExpand(Slice{}, 1, Slice{false})
+	ConfirmExpand(Slice{}, 2, Slice{false, false})
+	ConfirmExpand(Slice{true}, 2, Slice{true, false, false})
+	ConfirmExpand(Slice{true, true}, 2, Slice{true, true, false, false})
+
+	ConfirmExpandInline := func(s Slice, i, l int, r Slice) {
+		c := s.Cap()
+		x := s.Clone().(Slice)
+		y := &x
+		switch y.Expand(i, l); {
+		case y.Len() != r.Len():	t.Fatalf("%v.Extend(%v, %v) len should be %v but is %v", s, i, l, r.Len(), y.Len())
+		case y.Cap() != c + l:		t.Fatalf("%v.Extend(%v, %v) cap should be %v but is %v", s, i, l, c + l, y.Cap())
+		case !y.Equal(r):			t.Fatalf("%v.Extend(%v, %v) should be %v but is %v", s, i, l, r, y)
+		case x.Len() != r.Len():	t.Fatalf("%v.Extend(%v, %v) len should be %v but is %v", s, i, l, r.Len(), x.Len())
+		case x.Cap() != c + l:		t.Fatalf("%v.Extend(%v, %v) cap should be %v but is %v", s, i, l, c + l, x.Cap())
+		case !x.Equal(r):			t.Fatalf("%v.Extend(%v, %v) should be %v but is %v", s, i, l, r, x)
+		}
+	}
+
+	ConfirmExpandInline(Slice{}, 0, 1, Slice{false})
+	ConfirmExpandInline(Slice{}, 1, 1, Slice{false})
+	ConfirmExpandInline(Slice{}, 1, 2, Slice{false, false})
+	ConfirmExpandInline(Slice{}, 2, 3, Slice{false, false, false})
+	ConfirmExpandInline(Slice{true, true}, 1, 3, Slice{true, false, false, false, true})
+}
+
+func TestSliceAppend(t *testing.T) {
+	ConfirmAppend := func(s Slice, v interface{}, r Slice) {
+		x := s.Clone().(Slice)
+		if x.Append(v); !x.Equal(r) {
+			t.Fatalf("%v.Append(%v) should be %v but is %v", s, v, r, x)
+		}
+	}
+
+	ConfirmAppend(Slice{}, true, Slice{true})
+	ConfirmAppend(Slice{false}, true, Slice{false, true})
+
+	ConfirmAppend(Slice{}, Slice{true}, Slice{true})
+	ConfirmAppend(Slice{}, Slice{false, true}, Slice{false, true})
+	ConfirmAppend(Slice{true, true, true}, Slice{false, false}, Slice{true, true, true, false, false})
+
+	ConfirmAppend(Slice{}, []bool{true}, Slice{true})
+	ConfirmAppend(Slice{}, []bool{false, true}, Slice{false, true})
+	ConfirmAppend(Slice{true, true, true}, []bool{false, false}, Slice{true, true, true, false, false})
+}
+
+func TestSlicePrepend(t *testing.T) {
+	ConfirmPrepend := func(s Slice, v interface{}, r Slice) {
+		x := s.Clone().(Slice)
+		if x.Prepend(v); !x.Equal(r) {
+			t.Fatalf("%v.Prepend(%v) should be %v but is %v", s, v, r, x)
+		}
+	}
+
+	ConfirmPrepend(Slice{}, false, Slice{false})
+	ConfirmPrepend(Slice{false}, true, Slice{true, false})
+
+	ConfirmPrepend(Slice{}, Slice{false}, Slice{false})
+	ConfirmPrepend(Slice{}, Slice{false, true}, Slice{false, true})
+	ConfirmPrepend(Slice{false, false}, Slice{true}, Slice{true, false, false})
+	ConfirmPrepend(Slice{false, false}, Slice{true, true}, Slice{true, true, false, false})
+
+	ConfirmPrepend(Slice{}, []bool{false}, Slice{false})
+	ConfirmPrepend(Slice{}, []bool{false, true}, Slice{false, true})
+	ConfirmPrepend(Slice{false, false}, []bool{true}, Slice{true, false, false})
+	ConfirmPrepend(Slice{false, false}, []bool{true, true}, Slice{true, true, false, false})
 }
