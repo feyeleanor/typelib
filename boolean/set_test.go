@@ -7,13 +7,13 @@ import (
 func TestSetString(t *testing.T) {
 	ConfirmString := func(s Set, r string) {
 		if v := s.String(); r != v {
-			t.Errorf("String() expected %v but produced %v", r, v)
+			t.Errorf("%v.String() expected %v but produced %v", s, r, v)
 		}
 	}
 
-	ConfirmString(NewSet(), "(boolean set ())")
-	ConfirmString(NewSet(false, true), "(boolean set (true false))")
-	ConfirmString(NewSet(true, false), "(boolean set (true false))")
+	ConfirmString(NewSet(), "(set boolean ())")
+	ConfirmString(NewSet(false, true), "(set boolean (false true))")
+	ConfirmString(NewSet(true, false), "(set boolean (false true))")
 }
 
 func TestSetMember(t *testing.T) {

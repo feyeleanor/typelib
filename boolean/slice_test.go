@@ -8,13 +8,13 @@ import (
 func TestSliceString(t *testing.T) {
 	ConfirmString := func(s Slice, r string) {
 		if x := s.String(); x != r {
-			t.Fatalf("%v erroneously serialised as '%v'", r, x)
+			t.Fatalf("%v.String() expected %v but produced %v", s, r, x)
 		}
 	}
 
-	ConfirmString(Slice{}, "(boolean slice ())")
-	ConfirmString(Slice{false}, "(boolean slice (false))")
-	ConfirmString(Slice{false, true}, "(boolean slice (false true))")
+	ConfirmString(Slice{}, "(slice boolean ())")
+	ConfirmString(Slice{false}, "(slice boolean (false))")
+	ConfirmString(Slice{false, true}, "(slice boolean (false true))")
 }
 
 func TestSliceEqual(t *testing.T) {

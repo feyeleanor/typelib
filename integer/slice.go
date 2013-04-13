@@ -9,7 +9,7 @@ type	Slice	[]int
 
 const	ZERO = int(0)
 
-func (s Slice) String() (t string) {
+func (s Slice) String() string {
 	elements := []string{}
 	for _, v := range s {
 		elements = append(elements, fmt.Sprintf("%v", v))

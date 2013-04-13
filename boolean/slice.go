@@ -17,12 +17,12 @@ func NewSlice(v ...bool) (r Slice) {
 	return
 }
 
-func (s Slice) String() (t string) {
+func (s Slice) String() string {
 	elements := []string{}
 	for _, v := range s {
 		elements = append(elements, fmt.Sprintf("%v", v))
 	}
-	return fmt.Sprintf("(boolean slice (%v))", strings.Join(elements, " "))
+	return fmt.Sprintf("(slice boolean (%v))", strings.Join(elements, " "))
 }
 
 func (s Slice) equal(o Slice) (r bool) {

@@ -2,6 +2,7 @@ package boolean
 
 import(
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -53,6 +54,7 @@ func (m _map) String() string {
 	m.Each(func(v bool) {
 		elements = append(elements, fmt.Sprintf("%v", v))
 	})
+	sort.Strings(elements)
 	return strings.Join(elements, " ")
 }
 
@@ -68,7 +70,7 @@ func NewSet(v... bool) (r Set) {
 }
 
 func (s Set) String() string {
-	return fmt.Sprintf("(boolean set (%v))", s._map.String())
+	return fmt.Sprintf("(set boolean (%v))", s._map.String())
 }
 
 func (s Set) Empty() Set {
