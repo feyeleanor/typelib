@@ -170,5 +170,47 @@ func TestSinglyLinkedListClone(t *testing.T) {
 }
 
 func TestSinglyLinkedListEach(t *testing.T) {
-	t.Fatal("Add test for Each()")
+	slice := []bool{ true, false, false, true, false, true, true }
+	list := Cons(slice...)
+	count := 0
+	list.Each(func(v bool) {
+		if v != slice[count] {
+			t.Fatalf("%v.Each() element %v should be %v but is %v", list, count, slice[count], v)
+		}
+		count++
+	})
+
+	count = 0
+	list.Each(func(v interface{}) {
+		if v != slice[count] {
+			t.Fatalf("%v.Each() element %v should be %v but is %v", list, count, slice[count], v)
+		}
+		count++
+	})
+
+	list.Each(func(i int, v bool) {
+		if v != slice[i] {
+			t.Fatalf("%v.Each() element %v should be %v but is %v", list, i, slice[i], v)
+		}
+	})
+
+	list.Each(func(i int, v interface{}) {
+		if v != slice[i] {
+			t.Fatalf("%v.Each() element %v should be %v but is %v", list, i, slice[i], v)
+		}
+	})
+
+	list.Each(func(key interface{}, v bool) {
+		i := key.(int)
+		if v != slice[i] {
+			t.Fatalf("%v.Each() element %v should be %v but is %v", list, i, slice[i], v)
+		}
+	})
+
+	list.Each(func(key, v interface{}) {
+		i := key.(int)
+		if v != slice[i] {
+			t.Fatalf("%v.Each() element %v should be %v but is %v", list, i, slice[i], v)
+		}
+	})
 }
