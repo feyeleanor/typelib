@@ -5,6 +5,24 @@ import(
 )
 
 func TestMakeList(t *testing.T) {
+	ConfirmMakeList := func(n int) {
+		x := MakeList(n)
+		i := 0
+		for ; i < n; i++ {
+			if x.value {
+				t.Fatalf("MakeList(%v)[%v] should be false but is true", n, i)
+			}
+			x = x.next
+		}
+		if x != nil {
+			t.Fatalf("MakeList(%v) should contain %v elements but must contain more", n, i)
+		}
+	}
+
+	ConfirmMakeList(0)
+	ConfirmMakeList(1)
+	ConfirmMakeList(-1)
+	ConfirmMakeList(10)
 }
 
 func TestNewList(t *testing.T) {
