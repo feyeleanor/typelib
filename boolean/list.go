@@ -6,109 +6,167 @@ import(
 )
 
 type List struct {
-	start 		*node
-	end			*node
-	length		int
+	value	bool
+	next	*List
 }
 
-func NewList(n ...bool) (r List) {
-	if length := len(n); length > 0 {
-		r.start = &node{ value: n[0] }
-		r.end = r.start
-		for _, v := range n[1:] {
-			r.end = r.end.Append(v)
+func MakeList(n int) (r *List) {
+	if n > 0 {
+		for ; n > 0; n-- {
+			r = &List{ next: r }
 		}
-		r.length = length
 	}
 	return
 }
 
-func (l List) String() string {
+func NewList(n ...bool) (r *List) {
+	if length := len(n); length > 0 {
+		r = &List{ value: n[0] }
+		end := r
+		for _, v := range n[1:] {
+			end.next = &List{ value: v }
+			end = end.next
+		}
+	}
+	return
+}
+
+func (s *List) End() (r *List) {
+	if r = s; r != nil {
+		for ; r.next != nil; r = r.next {}
+	}
+	return
+}
+
+func (s *List) String() string {
 	elements := []string{}
-	l.Each(func(v bool) {
+	s.Each(func(v bool) {
 		elements = append(elements, fmt.Sprintf("%v", v))
 	})
 	return fmt.Sprintf("(list boolean (%v))", strings.Join(elements, " "))
 }
 
-func (l List) Each(f interface{}) bool {
-	if l.length > 0 {
-		n := l.start
-		switch f := f.(type) {
-		case func(bool):
-			for ; n != nil; n = n.tail {
-				f(n.value)
-			}
-		case func(int, bool):
-			for i := 0; n != nil; n = n.tail {
-				f(i, n.value)
-				i++
-			}
-		case func(interface{}, bool):
-			for i := 0; n != nil; n = n.tail {
-				f(i, n.value)
-				i++
-			}
-		case func(interface{}):
-			for ; n != nil; n = n.tail {
-				f(n.value)
-			}
-		case func(int, interface{}):
-			for i := 0; n != nil; n = n.tail {
-				f(i, n.value)
-				i++
-			}
-		case func(interface{}, interface{}):
-			for i := 0; n != nil; n = n.tail {
-				f(i, n.value)
-				i++
-			}
-		default:
+func (s *List) equal(o *List) (r bool) {
+	o_end := o
+	for end := s; end != nil; {
+		if o_end == nil || end.value != o_end.value {
 			return false
 		}
-		return true
+		end = end.next
+		o_end = o_end.next
 	}
-	return false
+	return o_end == nil
 }
 
-func (l List) ReverseEach(f interface{}) bool {
-	if l.length > 0 {
-		n := l.end
-		switch f := f.(type) {
-		case func(bool):
-			for ; n.head != nil; {
-				f(n.value)
-				n = n.head
-			}
-		case func(int, bool):
-			for i := 0; n.head != nil; i++ {
-				f(i, n.value)
-				n = n.head
-			}
-		case func(interface{}, bool):
-			for i := 0; n.head != nil; i++ {
-				f(i, n.value)
-				n = n.head
-			}
-		case func(interface{}):
-			for ; n.head != nil; {
-				f(n.value)
-				n = n.head
-			}
-		case func(int, interface{}):
-			for i := 0; n.head != nil; i++ {
-				f(i, n.value)
-				n = n.head
-			}
-		case func(interface{}, interface{}):
-			for i := 0; n.head != nil; i++ {
-				f(i, n.value)
-				n = n.head
-			}
-		default:
-			return false
-		}
-		return true
+func (s *List) Equal(o interface{}) (r bool) {
+	if o, ok := o.(*List); ok {
+		r = s.equal(o)
 	}
-	return false
+	return
+}
+
+func (s *List) Len() (i int) {
+	for end := s; end != nil; i++ {
+		end = end.next
+	}
+	return
+}
+
+func (s *List) Append(v interface{}) (r *List) {
+	if end := s.End(); end != nil {
+		switch v := v.(type) {
+		case bool:
+			end.next = &List{ value: v }
+		case []bool:
+			end.next = NewList(v...)
+		case *List:
+			end.next = v
+		}
+		r = s
+	} else {
+		switch v := v.(type) {
+		case bool:
+			r = &List{ value: v }
+		case []bool:
+			r = NewList(v...)
+		case *List:
+			r = v
+		}
+	}
+	return
+}
+
+func (s *List) Prepend(v interface{}) (r *List) {
+	switch v := v.(type) {
+	case bool:
+		r = &List{ value: v }
+	case []bool:
+		r = NewList(v...)
+	case *List:
+		r = v
+	}
+
+	if r == nil {
+		r = s
+	} else {
+		s = r.Append(s)
+	}
+	return
+}
+
+func (s *List) Clone() (r *List) {
+	if s != nil {
+		r = &List{ value: s.value }
+		l := r
+		for end := s.next; end != nil; {
+			l.next = &List{ value: end.value }
+			l = l.next
+			end = end.next
+		}
+	}
+	return
+}
+
+func (s *List) Each(f interface{}) {
+	l := s
+	switch f := f.(type) {
+	case func(bool):
+		for ; l != nil; l = l.next {
+			f(l.value)
+		}
+	case func(int, bool):
+		for i := 0; l != nil; l = l.next {
+			f(i, l.value)
+			i++
+		}
+	case func(interface{}, bool):
+		for i := 0; l != nil; l = l.next {
+			f(i, l.value)
+			i++
+		}
+	case func(interface{}):
+		for ; l != nil; l = l.next {
+			f(l.value)
+		}
+	case func(int, interface{}):
+		for i := 0; l != nil; l = l.next {
+			f(i, l.value)
+			i++
+		}
+	case func(interface{}, interface{}):
+		for i := 0; l != nil; l = l.next {
+			f(i, l.value)
+			i++
+		}
+	}
+}
+
+func (s *List) Reverse() (l *List) {
+	if s != nil {
+		l = &List{ value: s.value }
+		for end := s.next; end != nil; end = end.next {
+			l = &List{ value: end.value, next: l }
+		}
+	}
+	return
 }
