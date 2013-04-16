@@ -42,6 +42,30 @@ func TestNewList(t *testing.T) {
 	ConfirmNewList(NewList(true, false), []bool{ true, false })
 }
 
+func TestListAt(t *testing.T) {
+	ConfirmAt := func(l *List, n int, v bool) {
+		if x := l.At(n); x.value != v {
+			t.Fatalf("%v.At(%v) should be %v but is %v", l, n, v, x)
+		}
+	}
+
+	ConfirmAt(NewList(true, false, true), 0, true)
+	ConfirmAt(NewList(true, false, true), 1, false)
+	ConfirmAt(NewList(true, false, true), 2, true)
+}
+
+func TestListSet(t *testing.T) {
+	ConfirmAt := func(l *List, n int, v bool) {
+		if x := l.Set(n, v); x.value != v {
+			t.Fatalf("%v.Set(%v) should be %v but is %v", l, n, v, x)
+		}
+	}
+
+	ConfirmAt(NewList(true, false, true), 0, false)
+	ConfirmAt(NewList(true, false, true), 1, true)
+	ConfirmAt(NewList(true, false, true), 2, false)
+}
+
 func TestListEnd(t *testing.T) {
 	ConfirmEnd := func(l, r *List) {
 		if x := l.End(); x != r {
@@ -50,9 +74,9 @@ func TestListEnd(t *testing.T) {
 	}
 
 	end := &List{ value: true }
-	ConfirmEnd(&List{ next: end }, end)
-	ConfirmEnd(&List{ next: &List{ next: end } }, end)
-	ConfirmEnd(&List{ next: &List{ value: true , next: end } }, end)
+	ConfirmEnd(end, end)
+	ConfirmEnd(NewList().Append(end), end)
+	ConfirmEnd(NewList(false).Append(end), end)
 }
 
 func TestListString(t *testing.T) {

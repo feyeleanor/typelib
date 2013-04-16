@@ -31,6 +31,23 @@ func NewList(n ...bool) (r *List) {
 	return
 }
 
+func (s *List) At(i int) (r *List) {
+	for r = s; i > 0 && r.next != nil; i-- {
+		r = r.next
+	}
+	return
+}
+
+func (s *List) Set(i int, v bool) (r *List) {
+	for r = s; i > 0 && r.next != nil; i-- {
+		r = r.next
+	}
+	if r != nil {
+		r.value = v
+	}
+	return
+}
+
 func (s *List) End() (r *List) {
 	if r = s; r != nil {
 		for ; r.next != nil; r = r.next {}
