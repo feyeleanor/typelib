@@ -175,7 +175,150 @@ func (s *List) Each(f interface{}) {
 			f(i, l.value)
 			i++
 		}
+	case func(bool) bool:
+		for ; l != nil; l = l.next {
+			if !f(l.value) {
+				break
+			}
+		}
+	case func(int, bool) bool:
+		for i := 0; l != nil; l = l.next {
+			if f(i, l.value) {
+				i++
+			} else {
+				break
+			}
+		}
+	case func(interface{}, bool) bool:
+		for i := 0; l != nil; l = l.next {
+			if f(i, l.value) {
+				i++
+			} else {
+				break
+			}
+		}
+	case func(interface{}) bool:
+		for ; l != nil; l = l.next {
+			if !f(l.value) {
+				break
+			}
+		}
+	case func(int, interface{}) bool:
+		for i := 0; l != nil; l = l.next {
+			if f(i, l.value) {
+				i++
+			} else {
+				break
+			}
+		}
+	case func(interface{}, interface{}) bool:
+		for i := 0; l != nil; l = l.next {
+			if f(i, l.value) {
+				i++
+			} else {
+				break
+			}
+		}
 	}
+}
+
+func (s *List) Collect(f interface{}) (r *List) {
+	if l := s; l != nil {
+		switch f := f.(type) {
+		case func(bool) bool:
+			r = &List{ value: f(l.value) }
+			end := r
+			for l = l.next; l != nil; l = l.next {
+				end.next = &List{ value: f(l.value) }
+				end = end.next
+			}
+		case func(int, bool) bool:
+			r = &List{ value: f(0, l.value) }
+			end := r
+			l = l.next
+			for i := 1; l != nil; l = l.next {
+				end.next = &List{ value: f(i, l.value) }
+				end = end.next
+				i++
+			}
+		case func(interface{}, bool) bool:
+			r = &List{ value: f(0, l.value) }
+			end := r
+			l = l.next
+			for i := 1; l != nil; l = l.next {
+				end.next = &List{ value: f(i, l.value) }
+				end = end.next
+				i++
+			}
+		}
+	}
+	return
+}
+
+func (s *List) Delete(f interface{}) (r *List) {
+	if l := s; l != nil {
+		r = &List{ value: false }
+		end := r
+		switch f := f.(type) {
+		case bool:
+			for ; l != nil; l = l.next {
+				if l.value != f {
+					end.next = &List{ value: l.value }
+					end = end.next
+				}
+			}
+		case []bool:
+			for _, o := range f {
+				if l.value != o {
+					end.next = &List{ value: l.value }
+					end = end.next
+				}
+			}
+		case *List:
+			for o := f; o != nil; o = o.next {
+				if l.value != o.value {
+					end.next = &List{ value: l.value }
+					end = end.next
+				}
+			}
+		case func(bool) bool:
+			for ; l != nil; l = l.next {
+				if !f(l.value) {
+					end.next = &List{ value: l.value }
+					end = end.next
+				}
+			}
+		case func(int, bool) bool:
+			for i := 0; l != nil; l = l.next {
+				if !f(i, l.value) {
+					end.next = &List{ value: l.value }
+					end = end.next
+				}
+				i++
+			}
+		case func(interface{}, bool) bool:
+			for i := 0; l != nil; l = l.next {
+				if !f(i, l.value) {
+					end.next = &List{ value: l.value }
+					end = end.next
+				}
+				i++
+			}
+		}
+		r = r.next
+	}
+	return
+}
+
+func (s *List) Reduce(f func(bool, bool) bool) (r bool) {
+	if l := s; l != nil {
+		r = l.value
+		l = l.next
+		for ; l != nil; l = l.next {
+			r = f(r, l.value)
+		}
+	}
+	return
 }
 
 func (s *List) Reverse() (l *List) {

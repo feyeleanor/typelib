@@ -55,15 +55,16 @@ func TestListAt(t *testing.T) {
 }
 
 func TestListSet(t *testing.T) {
-	ConfirmAt := func(l *List, n int, v bool) {
-		if x := l.Set(n, v); x.value != v {
-			t.Fatalf("%v.Set(%v) should be %v but is %v", l, n, v, x)
+	ConfirmSet := func(l *List, n int, v bool, r *List) {
+		x := l.Clone()
+		if x.Set(n, v); !x.Equal(r) {
+			t.Fatalf("%v.Set(%v) should be %v but is %v", l, n, r, x)
 		}
 	}
 
-	ConfirmAt(NewList(true, false, true), 0, false)
-	ConfirmAt(NewList(true, false, true), 1, true)
-	ConfirmAt(NewList(true, false, true), 2, false)
+	ConfirmSet(NewList(true, false, true), 0, false, NewList(false, false, true))
+	ConfirmSet(NewList(true, false, true), 1, true, NewList(true, true, true))
+	ConfirmSet(NewList(true, false, true), 2, false, NewList(true, false, false))
 }
 
 func TestListEnd(t *testing.T) {
@@ -282,6 +283,151 @@ func TestListEach(t *testing.T) {
 			t.Fatalf("%v.Each() element %v should be %v but is %v", list, i, slice[i], v)
 		}
 	})
+
+	ConfirmEachPredicated := func(s *List, f interface{}, r int) {
+		count = 0
+		if s.Each(f); count != r {
+			t.Fatalf("%v.Each(%v) should execute %v times but actually executed %v times", s, f, r, count)
+		}
+	}
+
+	ConfirmEachPredicated(list, func(v bool) bool {
+		count++
+		return count < 5
+	}, 5)
+
+	ConfirmEachPredicated(list, func(v interface{}) bool {
+		count++
+		return count < 5
+	}, 5)
+
+	ConfirmEachPredicated(list, func(i int, v bool) bool {
+		count = i
+		return count < 5
+	}, 5)
+
+	ConfirmEachPredicated(list, func(i int, v interface{}) bool {
+		count = i
+		return count < 5
+	}, 5)
+
+	ConfirmEachPredicated(list, func(key interface{}, v bool) bool {
+		count = key.(int)
+		return count < 5
+	}, 5)
+
+	ConfirmEachPredicated(list, func(key, v interface{}) bool {
+		count = key.(int)
+		return count < 5
+	}, 5)
+}
+
+func TestListCollect(t *testing.T) {
+	ConfirmCollect := func(s *List, f interface{}, r *List) {
+		if x := s.Collect(f); !x.Equal(r) {
+			t.Fatalf("%v.Collect(%v) should be %v but is %v", s, f, r, x)
+		}
+	}
+
+	list := NewList(true, false, false, true, false, true, true)
+	ConfirmCollect(list, func(v bool) bool { return v }, list)
+	ConfirmCollect(list, func(i int, v bool) bool { return v }, list)
+	ConfirmCollect(list, func(key interface{}, v bool) bool { return v }, list)
+}
+
+func TestListDelete(t *testing.T) {
+	ConfirmDelete := func(s *List, f interface{}, r *List) {
+		if x := s.Delete(f); !x.Equal(r) {
+			t.Fatalf("%v.Delete(%v) should be %v but is %v", s, f, r, x)
+		}
+	}
+
+	ConfirmDelete(NewList(true, false, true, false), true, NewList(false, false))
+	ConfirmDelete(NewList(true, false, true, false), false, NewList(true, true))
+
+	ConfirmDelete(NewList(true, true, true, true), []bool{false, true, true, true}, NewList(true))
+	ConfirmDelete(NewList(true, true, true, true), []bool{false, false, true, true}, NewList(true, true))
+	ConfirmDelete(NewList(true, true, true, true), []bool{false, false, false, true}, NewList(true, true, true))
+	ConfirmDelete(NewList(true, true, true, true), []bool{false, false, false, false}, NewList(true, true, true, true))
+
+	ConfirmDelete(NewList(true, true, true, true), NewList(false, true, true, true), NewList(true))
+	ConfirmDelete(NewList(true, true, true, true), NewList(false, false, true, true), NewList(true, true))
+	ConfirmDelete(NewList(true, true, true, true), NewList(false, false, false, true), NewList(true, true, true))
+	ConfirmDelete(NewList(true, true, true, true), NewList(false, false, false, false), NewList(true, true, true, true))
+
+	ConfirmDelete(NewList(false, true, true, true), func(v bool) bool { return !v }, NewList(true, true, true))
+	ConfirmDelete(NewList(false, false, true, true), func(v bool) bool { return !v }, NewList(true, true))
+	ConfirmDelete(NewList(false, false, false, true), func(v bool) bool { return !v }, NewList(true))
+	ConfirmDelete(NewList(false, false, false, false), func(v bool) bool { return !v }, NewList())
+
+	ConfirmDelete(NewList(false, true, true, true), func(v bool) bool { return v }, NewList(false))
+	ConfirmDelete(NewList(false, false, true, true), func(v bool) bool { return v }, NewList(false, false))
+	ConfirmDelete(NewList(false, false, false, true), func(v bool) bool { return v }, NewList(false, false, false))
+	ConfirmDelete(NewList(false, false, false, false), func(v bool) bool { return v }, NewList(false, false, false, false))
+
+	ConfirmDelete(NewList(false, true, true, true), func(i int, v bool) bool { return !v }, NewList(true, true, true))
+	ConfirmDelete(NewList(false, false, true, true), func(i int, v bool) bool { return !v }, NewList(true, true))
+	ConfirmDelete(NewList(false, false, false, true), func(i int, v bool) bool { return !v }, NewList(true))
+	ConfirmDelete(NewList(false, false, false, false), func(i int, v bool) bool { return !v }, NewList())
+
+	ConfirmDelete(NewList(false, true, true, true), func(i int, v bool) bool { return v }, NewList(false))
+	ConfirmDelete(NewList(false, false, true, true), func(i int, v bool) bool { return v }, NewList(false, false))
+	ConfirmDelete(NewList(false, false, false, true), func(i int, v bool) bool { return v }, NewList(false, false, false))
+	ConfirmDelete(NewList(false, false, false, false), func(i int, v bool) bool { return v }, NewList(false, false, false, false))
+
+	ConfirmDelete(NewList(false, true, true, true), func(i int, v bool) bool { return i > 2 }, NewList(false, true, true))
+	ConfirmDelete(NewList(false, true, true, true), func(i int, v bool) bool { return i > 1 }, NewList(false, true))
+	ConfirmDelete(NewList(false, true, true, true), func(i int, v bool) bool { return i > 0 }, NewList(false))
+	ConfirmDelete(NewList(false, true, true, true), func(i int, v bool) bool { return true }, NewList())
+
+	ConfirmDelete(NewList(false, true, true, true), func(i interface{}, v bool) bool { return !v }, NewList(true, true, true))
+	ConfirmDelete(NewList(false, false, true, true), func(i interface{}, v bool) bool { return !v }, NewList(true, true))
+	ConfirmDelete(NewList(false, false, false, true), func(i interface{}, v bool) bool { return !v }, NewList(true))
+	ConfirmDelete(NewList(false, false, false, false), func(i interface{}, v bool) bool { return !v }, NewList())
+
+	ConfirmDelete(NewList(false, true, true, true), func(i interface{}, v bool) bool { return v }, NewList(false))
+	ConfirmDelete(NewList(false, false, true, true), func(i interface{}, v bool) bool { return v }, NewList(false, false))
+	ConfirmDelete(NewList(false, false, false, true), func(i interface{}, v bool) bool { return v }, NewList(false, false, false))
+	ConfirmDelete(NewList(false, false, false, false), func(i interface{}, v bool) bool { return v }, NewList(false, false, false, false))
+
+	ConfirmDelete(NewList(false, true, true, true), func(i interface{}, v bool) bool { return i.(int) > 2 }, NewList(false, true, true))
+	ConfirmDelete(NewList(false, true, true, true), func(i interface{}, v bool) bool { return i.(int) > 1 }, NewList(false, true))
+	ConfirmDelete(NewList(false, true, true, true), func(i interface{}, v bool) bool { return i.(int) > 0 }, NewList(false))
+	ConfirmDelete(NewList(false, true, true, true), func(i interface{}, v bool) bool { return true }, NewList())
+}
+
+func TestListReduce(t *testing.T) {
+	ConfirmReduce := func(s *List, f func(bool, bool) bool, seed interface{}, r bool) {
+		var l	*List
+		if seed, ok := seed.(bool); ok {
+			l = s.Prepend(seed)
+		} else {
+			l = s
+		}
+		if x := l.Reduce(f); x != r {
+			t.Fatalf("%v.Reduce(%v) with seed %v should be %v but is %v", s, f, seed, r, x)
+		}
+	}
+
+	ConfirmReduce(NewList(true, true, true), func(seed bool, v bool) bool { return seed && v }, nil, true)
+	ConfirmReduce(NewList(false, true, true), func(seed bool, v bool) bool { return seed && v }, nil, false)
+	ConfirmReduce(NewList(true, false, true), func(seed bool, v bool) bool { return seed && v }, nil, false)
+	ConfirmReduce(NewList(true, true, false), func(seed bool, v bool) bool { return seed && v }, nil, false)
+
+	ConfirmReduce(NewList(true, true, true), func(seed bool, v bool) bool { return seed || v }, nil, true)
+	ConfirmReduce(NewList(false, true, true), func(seed bool, v bool) bool { return seed || v }, nil, true)
+	ConfirmReduce(NewList(true, false, true), func(seed bool, v bool) bool { return seed || v }, nil, true)
+	ConfirmReduce(NewList(true, true, false), func(seed bool, v bool) bool { return seed || v }, nil, true)
+
+	ConfirmReduce(NewList(true, true, true), func(seed bool, v bool) bool { return seed && v }, false, false)
+	ConfirmReduce(NewList(false, true, true), func(seed bool, v bool) bool { return seed && v }, false, false)
+	ConfirmReduce(NewList(true, false, true), func(seed bool, v bool) bool { return seed && v }, false, false)
+	ConfirmReduce(NewList(true, true, false), func(seed bool, v bool) bool { return seed && v }, false, false)
+
+	ConfirmReduce(NewList(true, true, true), func(seed bool, v bool) bool { return seed || v }, false, true)
+	ConfirmReduce(NewList(false, true, true), func(seed bool, v bool) bool { return seed || v }, false, true)
+	ConfirmReduce(NewList(true, false, true), func(seed bool, v bool) bool { return seed || v }, false, true)
+	ConfirmReduce(NewList(true, true, false), func(seed bool, v bool) bool { return seed || v }, false, true)
 }
 
 func TestListReverse(t *testing.T) {
