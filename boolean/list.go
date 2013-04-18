@@ -31,6 +31,20 @@ func NewList(n ...bool) (r *List) {
 	return
 }
 
+func (s *List) Head() (r interface{}) {
+	if s != nil {
+		r = s.value
+	}
+	return
+}
+
+func (s *List) Tail() (r *List) {
+	if s != nil {
+		r = s.next
+	}
+	return
+}
+
 func (s *List) At(i interface{}) (r *List) {
 	x := i.(int)
 	for r = s; x > 0 && r.next != nil; x-- {
@@ -328,14 +342,15 @@ func (s *List) Delete(f interface{}) (r *List) {
 	return
 }
 
-func (s *List) Reduce(f interface{}) (r bool) {
+func (s *List) Reduce(f interface{}) (r *List) {
 	if l := s; l != nil {
 		if f, ok := f.(func(bool, bool) bool); ok {
-			r = l.value
+			x := l.value
 			l = l.next
 			for ; l != nil; l = l.next {
-				r = f(r, l.value)
+				x = f(x, l.value)
 			}
+			r = &List{ value: x }
 		}
 	}
 	return

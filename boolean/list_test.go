@@ -42,6 +42,33 @@ func TestNewList(t *testing.T) {
 	ConfirmNewList(NewList(true, false), []bool{ true, false })
 }
 
+func TestListHead(t *testing.T) {
+	ConfirmHead := func(l *List, r interface{}) {
+		if x := l.Head(); x != r {
+			t.Fatalf("%v.Head() should be %v but is %v", l, r, x)
+		}
+	}
+
+	ConfirmHead(NewList(), nil)
+	ConfirmHead(NewList(true), true)
+	ConfirmHead(NewList(false), false)
+	ConfirmHead(NewList(true, false), true)
+	ConfirmHead(NewList(false, true), false)
+}
+
+func TestListTail(t *testing.T) {
+	ConfirmTail := func(l, r *List) {
+		if x := l.Tail(); !x.Equal(r) {
+			t.Fatalf("%v.Tail() should be %v but is %v", l, r, x)
+		}
+	}
+
+	ConfirmTail(NewList(), nil)
+	ConfirmTail(NewList(true), nil)
+	ConfirmTail(NewList(true, false), NewList(false))
+	ConfirmTail(NewList(true, false, true), NewList(false, true))
+}
+
 func TestListAt(t *testing.T) {
 	ConfirmAt := func(l *List, n int, v bool) {
 		if x := l.At(n); x.value != v {
@@ -405,37 +432,37 @@ func TestListDelete(t *testing.T) {
 }
 
 func TestListReduce(t *testing.T) {
-	ConfirmReduce := func(s *List, f func(bool, bool) bool, seed interface{}, r bool) {
+	ConfirmReduce := func(s *List, f func(bool, bool) bool, seed interface{}, r *List) {
 		var l	*List
 		if seed, ok := seed.(bool); ok {
 			l = s.Prepend(seed)
 		} else {
 			l = s
 		}
-		if x := l.Reduce(f); x != r {
+		if x := l.Reduce(f); !x.Equal(r) {
 			t.Fatalf("%v.Reduce(%v) with seed %v should be %v but is %v", s, f, seed, r, x)
 		}
 	}
 
-	ConfirmReduce(NewList(true, true, true), func(seed bool, v bool) bool { return seed && v }, nil, true)
-	ConfirmReduce(NewList(false, true, true), func(seed bool, v bool) bool { return seed && v }, nil, false)
-	ConfirmReduce(NewList(true, false, true), func(seed bool, v bool) bool { return seed && v }, nil, false)
-	ConfirmReduce(NewList(true, true, false), func(seed bool, v bool) bool { return seed && v }, nil, false)
+	ConfirmReduce(NewList(true, true, true), func(seed bool, v bool) bool { return seed && v }, nil, NewList(true))
+	ConfirmReduce(NewList(false, true, true), func(seed bool, v bool) bool { return seed && v }, nil, NewList(false))
+	ConfirmReduce(NewList(true, false, true), func(seed bool, v bool) bool { return seed && v }, nil, NewList(false))
+	ConfirmReduce(NewList(true, true, false), func(seed bool, v bool) bool { return seed && v }, nil, NewList(false))
 
-	ConfirmReduce(NewList(true, true, true), func(seed bool, v bool) bool { return seed || v }, nil, true)
-	ConfirmReduce(NewList(false, true, true), func(seed bool, v bool) bool { return seed || v }, nil, true)
-	ConfirmReduce(NewList(true, false, true), func(seed bool, v bool) bool { return seed || v }, nil, true)
-	ConfirmReduce(NewList(true, true, false), func(seed bool, v bool) bool { return seed || v }, nil, true)
+	ConfirmReduce(NewList(true, true, true), func(seed bool, v bool) bool { return seed || v }, nil, NewList(true))
+	ConfirmReduce(NewList(false, true, true), func(seed bool, v bool) bool { return seed || v }, nil, NewList(true))
+	ConfirmReduce(NewList(true, false, true), func(seed bool, v bool) bool { return seed || v }, nil, NewList(true))
+	ConfirmReduce(NewList(true, true, false), func(seed bool, v bool) bool { return seed || v }, nil, NewList(true))
 
-	ConfirmReduce(NewList(true, true, true), func(seed bool, v bool) bool { return seed && v }, false, false)
-	ConfirmReduce(NewList(false, true, true), func(seed bool, v bool) bool { return seed && v }, false, false)
-	ConfirmReduce(NewList(true, false, true), func(seed bool, v bool) bool { return seed && v }, false, false)
-	ConfirmReduce(NewList(true, true, false), func(seed bool, v bool) bool { return seed && v }, false, false)
+	ConfirmReduce(NewList(true, true, true), func(seed bool, v bool) bool { return seed && v }, false, NewList(false))
+	ConfirmReduce(NewList(false, true, true), func(seed bool, v bool) bool { return seed && v }, false, NewList(false))
+	ConfirmReduce(NewList(true, false, true), func(seed bool, v bool) bool { return seed && v }, false, NewList(false))
+	ConfirmReduce(NewList(true, true, false), func(seed bool, v bool) bool { return seed && v }, false, NewList(false))
 
-	ConfirmReduce(NewList(true, true, true), func(seed bool, v bool) bool { return seed || v }, false, true)
-	ConfirmReduce(NewList(false, true, true), func(seed bool, v bool) bool { return seed || v }, false, true)
-	ConfirmReduce(NewList(true, false, true), func(seed bool, v bool) bool { return seed || v }, false, true)
-	ConfirmReduce(NewList(true, true, false), func(seed bool, v bool) bool { return seed || v }, false, true)
+	ConfirmReduce(NewList(true, true, true), func(seed bool, v bool) bool { return seed || v }, false, NewList(true))
+	ConfirmReduce(NewList(false, true, true), func(seed bool, v bool) bool { return seed || v }, false, NewList(true))
+	ConfirmReduce(NewList(true, false, true), func(seed bool, v bool) bool { return seed || v }, false, NewList(true))
+	ConfirmReduce(NewList(true, true, false), func(seed bool, v bool) bool { return seed || v }, false, NewList(true))
 }
 
 func TestListReverse(t *testing.T) {
