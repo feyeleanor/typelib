@@ -55,16 +55,24 @@ func TestListAt(t *testing.T) {
 }
 
 func TestListSet(t *testing.T) {
-	ConfirmSet := func(l *List, n int, v bool, r *List) {
+	ConfirmSet := func(l *List, n int, v interface{}, r *List) {
 		x := l.Clone()
 		if x.Set(n, v); !x.Equal(r) {
-			t.Fatalf("%v.Set(%v) should be %v but is %v", l, n, r, x)
+			t.Fatalf("%v.Set(%v, %v) should be %v but is %v", l, n, v, r, x)
 		}
 	}
 
 	ConfirmSet(NewList(true, false, true), 0, false, NewList(false, false, true))
 	ConfirmSet(NewList(true, false, true), 1, true, NewList(true, true, true))
 	ConfirmSet(NewList(true, false, true), 2, false, NewList(true, false, false))
+
+	ConfirmSet(NewList(true, false, true), 0, []bool{ false }, NewList(false))
+	ConfirmSet(NewList(true, false, true), 1, []bool{ true }, NewList(true, true))
+	ConfirmSet(NewList(true, false, true), 2, []bool{ false }, NewList(true, false, false))
+
+	ConfirmSet(NewList(true, false, true), 0, []bool{ false, false }, NewList(false, false))
+	ConfirmSet(NewList(true, false, true), 1, []bool{ true, true }, NewList(true, true, true))
+	ConfirmSet(NewList(true, false, true), 2, []bool{ false, true }, NewList(true, false, false, true))
 }
 
 func TestListEnd(t *testing.T) {

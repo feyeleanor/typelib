@@ -31,19 +31,37 @@ func NewList(n ...bool) (r *List) {
 	return
 }
 
-func (s *List) At(i int) (r *List) {
-	for r = s; i > 0 && r.next != nil; i-- {
+func (s *List) At(i interface{}) (r *List) {
+	x := i.(int)
+	for r = s; x > 0 && r.next != nil; x-- {
 		r = r.next
 	}
 	return
 }
 
-func (s *List) Set(i int, v bool) (r *List) {
-	for r = s; i > 0 && r.next != nil; i-- {
+func (s *List) Set(i, v interface{}) (r *List) {
+	x := i.(int)
+	for r = s; x > 0 && r.next != nil; x-- {
 		r = r.next
 	}
 	if r != nil {
-		r.value = v
+		switch v := v.(type) {
+		case bool:
+			r.value = v
+		case []bool:
+			switch len(v) {
+			case 0:
+			case 1:
+				r.value = v[0]
+				r.next = nil
+			default:
+				r.value = v[0]
+				r.next = NewList(v[1:]...)
+			}
+		case *List:
+		default:
+			panic(v)
+		}
 	}
 	return
 }
@@ -310,12 +328,14 @@ func (s *List) Delete(f interface{}) (r *List) {
 	return
 }
 
-func (s *List) Reduce(f func(bool, bool) bool) (r bool) {
+func (s *List) Reduce(f interface{}) (r bool) {
 	if l := s; l != nil {
-		r = l.value
-		l = l.next
-		for ; l != nil; l = l.next {
-			r = f(r, l.value)
+		if f, ok := f.(func(bool, bool) bool); ok {
+			r = l.value
+			l = l.next
+			for ; l != nil; l = l.next {
+				r = f(r, l.value)
+			}
 		}
 	}
 	return
